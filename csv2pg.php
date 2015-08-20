@@ -14,19 +14,25 @@ define("LOGGING","logging");
 define("SKIPLINES","skiplines");
 define("FIELDCOUNT","fieldcount");
 define("LINENUMBERS","linenumbers");
+define("PGUSER","pguser");
+define("PGPASSWORD","pgpassword");
+define("PGTABLE","pgtable");
 /*
  * argument defaults
  * much like pg2gviz
  * in other words, defaults get used unless over-ridden by command line args
  * the difference is they all get stuffed into an options array, makes for much cleaner code
  */
-$options[FILENAME]="dirty_data_1.txt";
+$options[FILENAME]="dirty_data_2.txt";
 $options[METHOD]=1;
 $options[DEBUGGING]=true;
 $options[LOGGING]=true;
 $options[SKIPLINES]=0;
 $options[FIELDCOUNT]=0;
 $options[LINENUMBERS]=false;
+$options[PGUSER]="pguser";
+$options[PGPASSWORD]="pgpassword";
+$options[PGTABLE]="pgtable";
 /*
  * the code 
  */
@@ -186,6 +192,146 @@ function csv2pg($options=array()) {
 		$options[LINENUMBERS] = $linenumbers;
 	}
 	if ($debugging) echo "linenumbers final: $linenumbers \n";
+	/*
+	 * get the pguser arg
+	 */
+	if (array_key_exists(PGUSER,$options)) {
+		$pguser = $options[PGUSER];
+	} else {
+		$pguser = "";
+	}
+	if ($debugging) echo "pguser default: $pguser \n";
+	$pguser_arg = getargs ("pguser",$pguser);
+	if ($debugging) echo "pguser_arg: $pguser_arg \n";
+	if (strlen(trim($pguser_arg))) {
+		$pguser = trim($pguser_arg);
+		$options[PGUSER] = $pguser;
+		if ($debugging) echo "pguser final: $pguser \n";
+	} else {
+		if ($debugging) echo "pguser final: $pguser \n";
+	}
+	/*
+	 * get the pgpassword arg
+	 */
+	if (array_key_exists(PGPASSWORD,$options)) {
+		$pgpassword = $options[PGPASSWORD];
+	} else {
+		$pgpassword = "";
+	}
+	if ($debugging) echo "pgpassword default: $pgpassword \n";
+	$pgpassword_arg = getargs ("pgpassword",$pgpassword);
+	if ($debugging) echo "pgpassword_arg: $pgpassword_arg \n";
+	if (strlen(trim($pgpassword_arg))) {
+		$pgpassword = trim($pgpassword_arg);
+		$options[PGPASSWORD] = $pgpassword;
+		if ($debugging) echo "pgpassword final: $pgpassword \n";
+	} else {
+		if ($debugging) echo "pgpassword final: $pgpassword \n";
+	}
+	/*
+	 * get the pgtable arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGTABLE,$options)) {
+		$pgtable = $options[PGTABLE];
+	} else {
+		// we can NOT set a default for this so the arg better have something!
+		$pgtable = "";
+	}
+	if ($debugging) echo "pgtable default: $pgtable \n";
+	$pgtable_arg = getargs ("pgtable",$pgtable);
+	if ($debugging) echo "pgtable_arg: $pgtable_arg \n";
+	if (strlen(trim($pgtable_arg))) {
+		$pgtable = trim($pgtable_arg);
+		$options[PGTABLE] = $pgtable;
+		if ($debugging) echo "pgtable final: $pgtable \n";
+	} else {
+		if (strlen(trim($pgtable))) {
+			if ($debugging) echo "pgtable final: $pgtable \n";
+		} else {
+			// we can NOT proceed without a pgtable!!
+			if ($logging) {
+				echo "Error: csv2pg: Missing pgtable. \n";
+			}
+			if ($debugging) {
+				echo "Options array: csv2pg:\n";
+				print_r($options);
+			}
+			return false;
+		}
+	}
+	/*
+	 * get the pgdb arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGDB,$options)) {
+		$pgdb = $options[PGDB];
+	} else {
+		// we can NOT set a default for this so the arg better have something!
+		$pgdb = "";
+	}
+	if ($debugging) echo "pgdb default: $pgdb \n";
+	$pgdb_arg = getargs ("pgdb",$pgdb);
+	if ($debugging) echo "pgdb_arg: $pgdb_arg \n";
+	if (strlen(trim($pgdb_arg))) {
+		$pgdb = trim($pgdb_arg);
+		$options[PGDB] = $pgdb;
+		if ($debugging) echo "pgdb final: $pgdb \n";
+	} else {
+		if (strlen(trim($pgdb))) {
+			if ($debugging) echo "pgdb final: $pgdb \n";
+		} else {
+			// we can NOT proceed without a pgdb!!
+			if ($logging) {
+				echo "Error: csv2pg: Missing pgdb. \n";
+			}
+			if ($debugging) {
+				echo "Options array: csv2pg:\n";
+				print_r($options);
+			}
+			return false;
+		}
+	}
+	/*
+	 * get the pghost arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGHOST,$options)) {
+		$pghost = $options[PGHOST];
+	} else {
+		// we can set a default for this
+		$pghost = "localhost";
+	}
+	if ($debugging) echo "pghost default: $pghost \n";
+	$pghost_arg = getargs ("pghost",$pghost);
+	if ($debugging) echo "pghost_arg: $pghost_arg \n";
+	if (strlen(trim($pghost_arg))) {
+		$pghost = trim($pghost_arg);
+		$options[PGHOST] = $pghost;
+		if ($debugging) echo "pghost final: $pghost \n";
+	} else {
+		if ($debugging) echo "pghost final: $pghost \n";
+	}
+	/*
+	 * get the pgport arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGPORT,$options)) {
+		$pgport = $options[PGPORT];
+	} else {
+		// we can set a default for this
+		$pgport = 5432;
+	}
+	if ($debugging) echo "pgport default: $pgport \n";
+	$pgport_arg = getargs ("pgport",$pgport);
+	if ($debugging) echo "pgport_arg: $pgport_arg \n";
+	if (strlen(trim($pgport_arg))) {
+		$pgport = intval($pgport_arg);
+		$options[PGPORT] = $pgport;
+		if ($debugging) echo "pgport final: $pgport \n";
+	} else {
+		if ($debugging) echo "pgport final: $pgport \n";
+	}
 	
 	/*
 	 * now start the file processing
@@ -206,6 +352,20 @@ function csv2pg($options=array()) {
 			/*
 			 * append field values to pg table
 			 */
+			$pgconnectionstring = "dbname=$pgdb host=$pghost port=$pgport";
+			if (strlen($pguser)) {
+				$pgconnectionstring .= " dbuser=$dbuser";
+			}
+			if (strlen($pgpassword)) {
+				$pgconnectionstring .= " pgpassword=$pgpassword";
+			}
+			$pgconnection = pg_connect($pgconnectionstring);
+			if (!$pgconnection) {
+				print pg_last_error($pgconnection);
+				return false;
+			}
+			$results = pg_query($pgsql_conn, "SELECT * LIMIT 1 FROM $pgtable");
+				
 			return true;
 		} else {
 			if ($logging) {
