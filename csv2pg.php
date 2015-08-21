@@ -3,48 +3,6 @@
  * our awesome php utils
  */
 include "misc_io.php";
-
-/*
- * constants
- */
-define("METHOD","method");
-define("FILENAME","filename");
-define("DEBUGGING","debugging");
-define("LOGGING","logging");
-define("SKIPLINES","skiplines");
-define("FIELDCOUNT","fieldcount");
-define("LINENUMBERS","linenumbers");
-/*
- * argument defaults
- * much like pg2gviz
- * in other words, defaults get used unless over-ridden by command line args
- * the difference is they all get stuffed into an options array, makes for much cleaner code
- */
-$options[FILENAME]="dirty_data_1.txt";
-$options[METHOD]=1;
-$options[DEBUGGING]=true;
-$options[LOGGING]=true;
-$options[SKIPLINES]=0;
-$options[FIELDCOUNT]=0;
-$options[LINENUMBERS]=false;
-/*
- * the code 
- */
-if (array_key_exists(LOGGING,$options)) {
-	$logging = $options[LOGGING];
-} else {
-	$logging = false;
-}
-if (csv2pg($options)) {
-	if ($logging) {
-		echo "It worked.\n";
-	}
-} else {
-	if ($logging) {
-		echo "It failed.\n";
-	}
-}
-
 /*
  * the functions that are the working componenets of the engine for this simple DMI
  */
@@ -109,13 +67,8 @@ function csv2pg($options=array()) {
 			if ($debugging) echo "file_name final: $file_name \n";
 		} else {
 			// we can NOT proceed without a file name!!
-			if ($logging) {
-				echo "Error: csv2pg: Missing file name. \n";
-			}
-			if ($debugging) {
-				echo "Options array: csv2pg:\n";
-				print_r($options);
-			}
+			if ($logging) echo "Error: csv2pg: Missing file name. \n";
+			if ($debugging) print_r($options);
 			return false;
 		}
 	}
@@ -186,37 +139,221 @@ function csv2pg($options=array()) {
 		$options[LINENUMBERS] = $linenumbers;
 	}
 	if ($debugging) echo "linenumbers final: $linenumbers \n";
-	
+	/*
+	 * get the pguser arg
+	 */
+	if (array_key_exists(PGUSER,$options)) {
+		$pguser = $options[PGUSER];
+	} else {
+		$pguser = "";
+	}
+	if ($debugging) echo "pguser default: $pguser \n";
+	$pguser_arg = getargs ("pguser",$pguser);
+	if ($debugging) echo "pguser_arg: $pguser_arg \n";
+	if (strlen(trim($pguser_arg))) {
+		$pguser = trim($pguser_arg);
+		$options[PGUSER] = $pguser;
+		if ($debugging) echo "pguser final: $pguser \n";
+	} else {
+		if ($debugging) echo "pguser final: $pguser \n";
+	}
+	/*
+	 * get the pgpassword arg
+	 */
+	if (array_key_exists(PGPASSWORD,$options)) {
+		$pgpassword = $options[PGPASSWORD];
+	} else {
+		$pgpassword = "";
+	}
+	if ($debugging) echo "pgpassword default: $pgpassword \n";
+	$pgpassword_arg = getargs ("pgpassword",$pgpassword);
+	if ($debugging) echo "pgpassword_arg: $pgpassword_arg \n";
+	if (strlen(trim($pgpassword_arg))) {
+		$pgpassword = trim($pgpassword_arg);
+		$options[PGPASSWORD] = $pgpassword;
+		if ($debugging) echo "pgpassword final: $pgpassword \n";
+	} else {
+		if ($debugging) echo "pgpassword final: $pgpassword \n";
+	}
+	/*
+	 * get the pgtable arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGTABLE,$options)) {
+		$pgtable = $options[PGTABLE];
+	} else {
+		// we can NOT set a default for this so the arg better have something!
+		$pgtable = "";
+	}
+	if ($debugging) echo "pgtable default: $pgtable \n";
+	$pgtable_arg = getargs ("pgtable",$pgtable);
+	if ($debugging) echo "pgtable_arg: $pgtable_arg \n";
+	if (strlen(trim($pgtable_arg))) {
+		$pgtable = trim($pgtable_arg);
+		$options[PGTABLE] = $pgtable;
+		if ($debugging) echo "pgtable final: $pgtable \n";
+	} else {
+		if (strlen(trim($pgtable))) {
+			if ($debugging) echo "pgtable final: $pgtable \n";
+		} else {
+			// we can NOT proceed without a pgtable!!
+			if ($logging) echo "Error: csv2pg: Missing pgtable. \n";
+			if ($debugging) print_r($options);
+			return false;
+		}
+	}
+	/*
+	 * get the pgdb arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGDB,$options)) {
+		$pgdb = $options[PGDB];
+	} else {
+		// we can NOT set a default for this so the arg better have something!
+		$pgdb = "";
+	}
+	if ($debugging) echo "pgdb default: $pgdb \n";
+	$pgdb_arg = getargs ("pgdb",$pgdb);
+	if ($debugging) echo "pgdb_arg: $pgdb_arg \n";
+	if (strlen(trim($pgdb_arg))) {
+		$pgdb = trim($pgdb_arg);
+		$options[PGDB] = $pgdb;
+		if ($debugging) echo "pgdb final: $pgdb \n";
+	} else {
+		if (strlen(trim($pgdb))) {
+			if ($debugging) echo "pgdb final: $pgdb \n";
+		} else {
+			// we can NOT proceed without a pgdb!!
+			if ($logging) echo "Error: csv2pg: Missing pgdb. \n";
+			if ($debugging) print_r($options);
+			return false;
+		}
+	}
+	/*
+	 * get the pghost arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGHOST,$options)) {
+		$pghost = $options[PGHOST];
+	} else {
+		// we can set a default for this
+		$pghost = "localhost";
+	}
+	if ($debugging) echo "pghost default: $pghost \n";
+	$pghost_arg = getargs ("pghost",$pghost);
+	if ($debugging) echo "pghost_arg: $pghost_arg \n";
+	if (strlen(trim($pghost_arg))) {
+		$pghost = trim($pghost_arg);
+		$options[PGHOST] = $pghost;
+		if ($debugging) echo "pghost final: $pghost \n";
+	} else {
+		if ($debugging) echo "pghost final: $pghost \n";
+	}
+	/*
+	 * get the pgport arg
+	 * this is required, so bail if it is not set from either the default above or the cli arg
+	 */
+	if (array_key_exists(PGPORT,$options)) {
+		$pgport = $options[PGPORT];
+	} else {
+		// we can set a default for this
+		$pgport = 5432;
+	}
+	if ($debugging) echo "pgport default: $pgport \n";
+	$pgport_arg = getargs ("pgport",$pgport);
+	if ($debugging) echo "pgport_arg: $pgport_arg \n";
+	if (strlen(trim($pgport_arg))) {
+		$pgport = intval($pgport_arg);
+		$options[PGPORT] = $pgport;
+		if ($debugging) echo "pgport final: $pgport \n";
+	} else {
+		if ($debugging) echo "pgport final: $pgport \n";
+	}
+
 	/*
 	 * now start the file processing
 	 * convert file into array of file records
 	 */
 	if ($file_records = file($file_name)) {
-		if ($debugging) {
-			echo "File record array: csv2pg: \n";
-			print_r($file_records);
-		}
+		if ($debugging) print_r($file_records);
 		/*
 		 * convert array of file records into an array of file field arrays
 		 */
 		if ($file_fields = csv2array($file_records,$options)) {
-			if ($debugging) {
-				print_r($file_fields);
-			}
+			if ($debugging) print_r($file_fields);
 			/*
 			 * append field values to pg table
 			 */
-			return true;
-		} else {
-			if ($logging) {
-				echo "Error: csv2pg: could not convert file record array into file field arrays\n";
+			$pgconnectionstring = "dbname=$pgdb host=$pghost port=$pgport";
+			if (strlen($pguser)) {
+				$pgconnectionstring .= " user=$pguser";
 			}
+			if (strlen($pgpassword)) {
+				$pgconnectionstring .= " password=$pgpassword";
+			}
+			$pgconnection = pg_connect($pgconnectionstring);
+			if (!$pgconnection) {
+				if ($logging) echo "Error: could not make database connection: ".pg_last_error($pgconnection);
+				return false;
+			}
+			$results = pg_query($pgconnection, "SELECT * FROM $pgtable LIMIT 1");
+			$pgtable_fieldcount = pg_num_fields($results);
+			$file_recordcount = count($file_records);
+			if ($logging) echo "\$pgtable_fieldcount: $pgtable_fieldcount\n";
+			if ($logging) echo "\$fieldcount (expected): $fieldcount\n";
+			if ($logging) echo "\$file_recordcount: $file_recordcount\n";
+			if ($linenumbers) if ($logging) echo "Warning: using first field in table $pgtable as a line number field \n";
+			$arraytocopy = array();
+			for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
+				if ($recordnumber>=$skiplines) {
+					$file_fieldcount = count($file_fields[$recordnumber]);
+					if ($debugging) echo "\$recordnumber: $recordnumber  \$file_fieldcount: $file_fieldcount\n";
+					if ($fieldcount && ($file_fieldcount<>$fieldcount)) {
+						if ($logging) echo "Warning: record $recordnumber in file $file_name has $file_fieldcount fields, expected $fieldcount \n";
+					}
+					if ($file_fieldcount>$pgtable_fieldcount) {
+						if ($logging) echo "Warning: record $recordnumber in file $file_name has $file_fieldcount fields, pg table $pgtable only has $pgtable_fieldcount \n";
+					} 
+					/*
+					 * create the tab delimited string to use for the "row"
+					 */
+					
+					$row = "";
+					$fieldcounttocopy = $pgtable_fieldcount;
+					$fieldcountcopied = 0;
+					/*
+					 * use the first field in the output table for file line numbers
+					 */
+					if ($linenumbers) {
+						$row .= "$recordnumber";
+						$fieldcounttocopy = $pgtable_fieldcount-1;
+						$fieldcountcopied=1;
+					}
+					/*
+					 * now fill out the tab delimited string to paste in each row
+					 */
+					for ($fieldnumber=0;$fieldnumber<$fieldcounttocopy;$fieldnumber++) {
+						if ($fieldcountcopied) $row .= "\t";
+						if ($fieldnumber<$file_fieldcount) {
+							$row .= $file_fields[$recordnumber][$fieldnumber];
+						} else {
+							$row .= "\\NULL";
+						}
+						$fieldcountcopied++;
+					}
+					$row .= "\n";
+					$arraytocopy[] = $row;
+				} else {
+					if ($logging) echo "Warning: skipping line $recordnumber of file $file_name \n";
+				}
+			}
+			return pg_copy_from($pgconnection,$pgtable,$arraytocopy,"\t","\\NULL");
+		} else {
+			if ($logging) echo "Error: csv2pg: could not convert file record array into file field arrays\n";
 			return false;
 		}
 	} else {
-		if ($logging) {
-			echo "Error: csv2pg: could not read records from file: ".$file_name."\n";
-		}
+		if ($logging) echo "Error: csv2pg: could not read records from file: ".$file_name."\n";
 		return false;
 	}
 }
@@ -235,13 +372,8 @@ function csv2array($file_records,$options=array()) {
 	if (array_key_exists(METHOD,$options)) {
 		$method = $options[METHOD];
 	} else {
-		if ($logging) {
-			echo "Error: csv2array: missing file processing method\n";
-		}
-		if ($debugging) {
-			echo "Options array: csv2array:\n";
-			print_r($options);
-		}
+		if ($logging) echo "Error: csv2array: missing file processing method\n";
+		if ($debugging) print_r($options);
 		return false;
 	}
 	switch($method) {
@@ -249,9 +381,7 @@ function csv2array($file_records,$options=array()) {
 			return array_map('str_getcsv', $file_records);
 		case 0:
 		default:
-			if ($logging) {
-				echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
-			}
+			if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
 			return false;
 	}
 }
