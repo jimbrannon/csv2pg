@@ -1,0 +1,52 @@
+#---------------------------- Provisional Data -------------------------------
+#This system is maintained by the Colorado Division of Water Resources.
+#Contact: Colorado Division of Water Resources (303) 866-3581
+#
+#All data presented on the Colorado Surface Water Conditions web site are 
+#provisional and subject to revision. Data users are cautioned to consider
+#carefully the provisional nature of the information before using it for 
+#decisions that concern personal or public safety or the conduct of business
+#that involves substantial monetary or operational consequences.
+#
+#Data is returned in TAB delimited format. Data miners may find help on automating
+#queries and formatting parameters at http://www.dwr.state.co.us/help
+##Gaging Station: SOUTH PLATTE RIVER NEAR KERSEY (plakerco)
+#Retrieved: 8/27/2015 01:15
+#-----------------------------------------------------------------------------
+Station	Date/Time	DISCHRG (cfs)
+plakerco	2015-08-26 00:00	359
+plakerco	2015-08-26 01:00	363
+plakerco	2015-08-26 02:00	369
+plakerco	2015-08-26 03:00	374
+plakerco	2015-08-26 04:00	375
+plakerco	2015-08-26 05:00	376
+plakerco	2015-08-26 06:00	378
+plakerco	2015-08-26 07:00	378
+plakerco	2015-08-26 08:00	381
+plakerco	2015-08-26 09:00	382
+plakerco	2015-08-26 10:00	381
+plakerco	2015-08-26 11:00	382
+plakerco	2015-08-26 12:00	382
+plakerco	2015-08-26 13:00	385
+plakerco	2015-08-26 14:00	386
+plakerco	2015-08-26 15:00	385
+plakerco	2015-08-26 16:00	385
+plakerco	2015-08-26 17:00	384
+plakerco	2015-08-26 18:00	384
+plakerco	2015-08-26 19:00	386
+plakerco	2015-08-26 20:00	392
+plakerco	2015-08-26 21:00	395
+plakerco	2015-08-26 22:00	396
+plakerco	2015-08-26 23:00	398
+plakerco	2015-08-27 00:00	398
+plakerco	2015-08-27 01:00	397
+plakerco	2015-08-27 02:00	398
+plakerco	2015-08-27 03:00	395
+plakerco	2015-08-27 04:00	395
+plakerco	2015-08-27 05:00	391
+plakerco	2015-08-27 06:00	388
+plakerco	2015-08-27 07:00	386
+plakerco	2015-08-27 08:00	383
+plakerco	2015-08-27 09:00	381
+plakerco	2015-08-27 10:00	376
+plakerco	2015-08-27 11:00	370
