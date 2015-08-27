@@ -13,6 +13,7 @@ include "csv2pg.php";
  */
 define("METHOD","method");
 define("FILENAME","filename");
+define("DELIMITER","delimiter");
 define("DEBUGGING","debugging");
 define("LOGGING","logging");
 define("SKIPLINES","skiplines");
@@ -33,6 +34,7 @@ define("PGPORT","pgport");
  * the difference is they all get stuffed into an options array, makes for much cleaner code
  */
 $options[FILENAME]="dirty_data_1.txt";
+$options[DELIMITER]=","; //typical: comma ",";  tab "\t"; space " "
 $options[METHOD]=1;
 $options[DEBUGGING]=false;
 $options[LOGGING]=true;

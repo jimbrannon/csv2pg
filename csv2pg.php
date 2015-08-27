@@ -73,6 +73,33 @@ function csv2pg($options=array()) {
 		}
 	}
 	/*
+	 * get the delimiter arg
+	 */
+	if (array_key_exists(DELIMITER,$options)) {
+		$delimiter = $options[DELIMITER];
+	} else {
+		$delimiter = ",";
+	}
+	if ($debugging) echo "delimiter default: $delimiter \n";
+	$delimiter_arg = getargs ("delimiter",$delimiter);
+	if ($debugging) echo "delimiter_arg: $delimiter_arg \n";
+	if (strlen(trim($delimiter_arg))) {
+		switch($delimiter_arg) {
+			case "tab":
+				$delimiter = "\t";
+				break;
+			case "space":
+				$delimiter = " ";
+				break;
+			case "comma":
+			default:
+				$delimiter = ",";
+				break;
+		}
+		$options[DELIMITER] = $delimiter;
+	}
+	if ($debugging) echo "delimiter final: $delimiter \n";
+	/*
 	 * get the method arg
 	 */
 	if (array_key_exists(METHOD,$options)) {
@@ -369,6 +396,13 @@ function csv2array($file_records,$options=array()) {
 	} else {
 		$debugging = false;
 	}
+	if (array_key_exists(DELIMITER,$options)) {
+		$delimiter = $options[DELIMITER];
+	} else {
+		$delimiter = ",";
+	}
+	$enclosure='"';
+	$escape='\\';
 	if (array_key_exists(METHOD,$options)) {
 		$method = $options[METHOD];
 	} else {
@@ -378,7 +412,7 @@ function csv2array($file_records,$options=array()) {
 	}
 	switch($method) {
 		case 1:
-			return array_map('str_getcsv', $file_records);
+			return array_map('str_getcsv', $file_records, array($delimiter,$enclosure,$escape));
 		case 0:
 		default:
 			if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
