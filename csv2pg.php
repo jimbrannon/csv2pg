@@ -22,7 +22,7 @@ function csv2pg($options=array()) {
 		$debugging = false;
 	}
 	if ($debugging) echo "debugging default: $debugging \n";
-	$debugging_arg = getargs ("debug",$debugging);
+	$debugging_arg = getargs ("debugging",$debugging);
 	if ($debugging) echo "debugging_arg: $debugging_arg \n";
 	if (strlen(trim($debugging_arg))) {
 		$debugging = strtobool($debugging_arg);

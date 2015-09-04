@@ -34,17 +34,17 @@ define("PGPORT","pgport");
  * the difference is they all get stuffed into an options array, makes for much cleaner code
  */
 $options[FILENAME]="wesditco_1day.txt";
-$options[DELIMITER]="\t"; //typical: comma ",";  tab "\t"; space " "
+$options[DELIMITER]="."; //typical: comma ",";  tab "\t"; space " "
 $options[METHOD]=1;
 $options[DEBUGGING]=false;
 $options[LOGGING]=true;
-$options[SKIPLINES]=16;
+$options[SKIPLINES]=0;
 $options[FIELDCOUNT]=3;
 $options[LINENUMBERS]=false;
-$options[PGUSER]="drupal";
-$options[PGPASSWORD]="drupal_psql";
-$options[PGTABLE]="empty_dummy";
-$options[PGDB]="drupal_fetchit7_testing";
+$options[PGUSER]="postgres";
+$options[PGPASSWORD]="Br@nD3v_psql";
+$options[PGTABLE]="emptytable10";
+$options[PGDB]="wrong";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
