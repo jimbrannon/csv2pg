@@ -428,6 +428,7 @@ function csv2pg($options=array()) {
 					if ($logging) print "Warning: skipping line ".($recordnumber+1)." of file $file_name \n";
 				}
 			}
+			if ($logging) print_r($arraytocopy);
 			return pg_copy_from($pgconnection,$pgtable,$arraytocopy,"\t","\\NULL");
 		} else {
 			if ($logging) echo "Error: csv2pg: could not convert file record array into file field arrays\n";
