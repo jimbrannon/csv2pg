@@ -22,7 +22,7 @@ function csv2pg($options=array()) {
 		$debugging = false;
 	}
 	if ($debugging) echo "debugging default: $debugging \n";
-	$debugging_arg = getargs ("debug",$debugging);
+	$debugging_arg = getargs ("debugging",$debugging);
 	if ($debugging) echo "debugging_arg: $debugging_arg \n";
 	if (strlen(trim($debugging_arg))) {
 		$debugging = strtobool($debugging_arg);
@@ -72,6 +72,33 @@ function csv2pg($options=array()) {
 			return false;
 		}
 	}
+	/*
+	 * get the delimiter arg
+	 */
+	if (array_key_exists(DELIMITER,$options)) {
+		$delimiter = $options[DELIMITER];
+	} else {
+		$delimiter = ",";
+	}
+	if ($debugging) echo "delimiter default: $delimiter \n";
+	$delimiter_arg = getargs ("delimiter",$delimiter);
+	if ($debugging) echo "delimiter_arg: $delimiter_arg \n";
+	if (strlen(trim($delimiter_arg))) {
+		switch($delimiter_arg) {
+			case "tab":
+				$delimiter = "\t";
+				break;
+			case "space":
+				$delimiter = " ";
+				break;
+			case "comma":
+			default:
+				$delimiter = ",";
+				break;
+		}
+		$options[DELIMITER] = $delimiter;
+	}
+	if ($debugging) echo "delimiter final: $delimiter \n";
 	/*
 	 * get the method arg
 	 */
@@ -307,17 +334,16 @@ function csv2pg($options=array()) {
 			for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
 				if ($recordnumber>=$skiplines) {
 					$file_fieldcount = count($file_fields[$recordnumber]);
-					if ($debugging) echo "\$recordnumber: $recordnumber  \$file_fieldcount: $file_fieldcount\n";
+					if ($debugging) echo "\$recordnumber: ".($recordnumber+1)."  \$file_fieldcount: $file_fieldcount\n";
 					if ($fieldcount && ($file_fieldcount<>$fieldcount)) {
-						if ($logging) echo "Warning: record $recordnumber in file $file_name has $file_fieldcount fields, expected $fieldcount \n";
+						if ($logging) echo "Warning: record ".($recordnumber+1)." in file $file_name has $file_fieldcount fields, expected $fieldcount \n";
 					}
 					if ($file_fieldcount>$pgtable_fieldcount) {
-						if ($logging) echo "Warning: record $recordnumber in file $file_name has $file_fieldcount fields, pg table $pgtable only has $pgtable_fieldcount \n";
+						if ($logging) echo "Warning: record ".($recordnumber+1)." in file $file_name has $file_fieldcount fields, pg table $pgtable only has $pgtable_fieldcount \n";
 					} 
 					/*
 					 * create the tab delimited string to use for the "row"
 					 */
-					
 					$row = "";
 					$fieldcounttocopy = $pgtable_fieldcount;
 					$fieldcountcopied = 0;
@@ -325,7 +351,7 @@ function csv2pg($options=array()) {
 					 * use the first field in the output table for file line numbers
 					 */
 					if ($linenumbers) {
-						$row .= "$recordnumber";
+						$row .= $recordnumber+1;
 						$fieldcounttocopy = $pgtable_fieldcount-1;
 						$fieldcountcopied=1;
 					}
@@ -344,7 +370,7 @@ function csv2pg($options=array()) {
 					$row .= "\n";
 					$arraytocopy[] = $row;
 				} else {
-					if ($logging) echo "Warning: skipping line $recordnumber of file $file_name \n";
+					if ($logging) print "Warning: skipping line ".($recordnumber+1)." of file $file_name \n";
 				}
 			}
 			return pg_copy_from($pgconnection,$pgtable,$arraytocopy,"\t","\\NULL");
@@ -353,7 +379,7 @@ function csv2pg($options=array()) {
 			return false;
 		}
 	} else {
-		if ($logging) echo "Error: csv2pg: could not read records from file: ".$file_name."\n";
+		if ($logging) echo "Error: csv2pg: could not read from file: $file_name \n";
 		return false;
 	}
 }
@@ -369,6 +395,13 @@ function csv2array($file_records,$options=array()) {
 	} else {
 		$debugging = false;
 	}
+	if (array_key_exists(DELIMITER,$options)) {
+		$delimiter = $options[DELIMITER];
+	} else {
+		$delimiter = ",";
+	}
+	$enclosure='"';
+	$escape='\\';
 	if (array_key_exists(METHOD,$options)) {
 		$method = $options[METHOD];
 	} else {
@@ -376,9 +409,14 @@ function csv2array($file_records,$options=array()) {
 		if ($debugging) print_r($options);
 		return false;
 	}
+	// there are better more rigorous methods out there, but this was a quick and inexpensive project...
+	//   put the better ones here when the need arises
 	switch($method) {
 		case 1:
-			return array_map('str_getcsv', $file_records);
+			$csvArray = array();
+			foreach ($file_records as $file_record)
+				$csvArray[] = str_getcsv($file_record,$delimiter,$enclosure,$escape);
+			return $csvArray;
 		case 0:
 		default:
 			if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
