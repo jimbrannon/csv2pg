@@ -306,7 +306,7 @@ function csv2pg($options=array()) {
 	 * now start the file processing
 	 * convert file into array of file records
 	 */
-	if ($file_records = file($file_name)) {
+	if ($file_records = file($file_name,FILE_IGNORE_NEW_LINES)) {
 		if ($debugging) print_r($file_records);
 		/*
 		 * convert array of file records into an array of file field arrays
@@ -420,7 +420,14 @@ function csv2pg($options=array()) {
 							if ($logging) echo "c $c \n";
 							if ($logging) echo "val $val \n";
 							if ($logging) echo "$r\t$c\t$val\n";
-							$arraytocopy[] = "$r\t$c\t$val\n";
+							$row="";
+							$row .= $r;
+							$row .= "\t";
+							$row .= $c;
+							$row .= "\t";
+							$row .= $val;
+							$row .= "\n";
+							$arraytocopy[] = $row;
 							$fieldcountcopied++;
 						}
 					}
