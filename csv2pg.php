@@ -84,6 +84,7 @@ function csv2pg($options=array()) {
 	$delimiter_arg = getargs ("delimiter",$delimiter);
 	if ($debugging) echo "delimiter_arg: $delimiter_arg \n";
 	$fixed_width=0;
+	$fixed_width_array=array();
 	if (strlen(trim($delimiter_arg))) {
 		switch($delimiter_arg) {
 			case "tab":
@@ -93,7 +94,8 @@ function csv2pg($options=array()) {
 				$delimiter = " ";
 				break;
 			case "fixed_".substr($delimiter_arg,6): // emulate fixed_*
-				$fixed_width=intval(substr($delimiter_arg,6));
+				$fixed_width_array=explode("_",substr($delimiter_arg,6));
+				$fixed_width=intval($fixed_width_array[0]);
 				if ($logging) echo "switched to fixed width fields of size: $fixed_width \n";
 				break;
 			case "comma":
@@ -313,7 +315,7 @@ function csv2pg($options=array()) {
 		 */
 		if($fixed_width){
 			// read the records with fixed width fields of size $fixed_width
-			$file_fields = fixedwidth2array($file_records,$fixed_width,$options);
+			$file_fields = fixedwidth2array($file_records,$fixed_width_array,$options);
 		} else {
 			//else assume it is a delimited record
 			$file_fields = csv2array($file_records,$options);
@@ -482,7 +484,8 @@ function csv2array($file_records,$options=array()) {
 			return false;
 	}
 }
-function fixedwidth2array($file_records,$fixed_width,$options=array()) {
+function fixedwidth2array($file_records,$fixed_width_array,$options=array()) {
+	$fixed_width = $fixed_width_array[0];
 	if (!$fixed_width) {
 		return false;
 	}
@@ -497,11 +500,23 @@ function fixedwidth2array($file_records,$fixed_width,$options=array()) {
 		$debugging = false;
 	}
 	$recordArray = array();
+	$fieldwidthcount = count($fixed_width_array);
 	foreach ($file_records as $file_record) {
 		$fieldArray = array();
 		$recordLength = strlen($file_record);
-		for ($i = 0; $i < $recordLength; $i=$i+$fixed_width) {
-			$fieldArray[] = substr($file_record,$i,$fixed_width);
+		$currentpointer = 0;
+		$currentwidth = 0;
+		$fieldcounter = 0;
+		while ($currentpointer < $recordLength) {
+			// reset field width if necessary
+			if ($fieldcounter < $fieldwidthcount) {
+				$currentwidth = $fixed_width_array[$fieldcounter];
+			}
+			//get the field
+			$fieldArray[] = substr($file_record,$currentpointer,$currentwidth);
+			//set up for the next field
+			$currentpointer += $currentwidth;
+			$fieldcounter++;
 		}
 		$recordArray[] = $fieldArray;
 	}
