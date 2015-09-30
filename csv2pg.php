@@ -103,8 +103,6 @@ function csv2pg($options=array()) {
 		}
 		$options[DELIMITER] = $delimiter;
 	}
-	if ($logging) echo "fixed_width : $fixed_width \n";
-	if ($logging) echo "delimiter final: $delimiter \n";
 	if ($debugging) echo "delimiter final: $delimiter \n";
 	/*
 	 * get the method arg
@@ -418,6 +416,10 @@ function csv2pg($options=array()) {
 								$c=$fieldnumber+1;
 							}
 							$val=$file_fields[$recordnumber][$fieldnumber];
+							if ($logging) echo "r $r \n";
+							if ($logging) echo "c $c \n";
+							if ($logging) echo "val $val \n";
+							if ($logging) echo "$r\t$c\t$val\n";
 							$arraytocopy[] = "$r\t$c\t$val\n";
 							$fieldcountcopied++;
 						}
