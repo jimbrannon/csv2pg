@@ -83,6 +83,7 @@ function csv2pg($options=array()) {
 	if ($debugging) echo "delimiter default: $delimiter \n";
 	$delimiter_arg = getargs ("delimiter",$delimiter);
 	if ($debugging) echo "delimiter_arg: $delimiter_arg \n";
+	$fixed_width=0;
 	if (strlen(trim($delimiter_arg))) {
 		switch($delimiter_arg) {
 			case "tab":
@@ -90,6 +91,9 @@ function csv2pg($options=array()) {
 				break;
 			case "space":
 				$delimiter = " ";
+				break;
+			case "fixed_".substr($delimiter_arg,6): // emulate fixed_*
+				$fixed_width=intval(substr($delimiter_arg,6));
 				break;
 			case "comma":
 			default:
@@ -306,7 +310,14 @@ function csv2pg($options=array()) {
 		/*
 		 * convert array of file records into an array of file field arrays
 		 */
-		if ($file_fields = csv2array($file_records,$options)) {
+		if($fixed_width){
+			// read the records with fixed width fields of size $fixed_width
+			$file_fields = fixedwidth2array($file_records,$fixed_width,$options)
+		} else {
+			//else assume it is a delimited record
+			$file_fields = csv2array($file_records,$options)
+		}
+		if ($file_fields) {
 			if ($debugging) print_r($file_fields);
 			/*
 			 * append field values to pg table
@@ -331,44 +342,86 @@ function csv2pg($options=array()) {
 			if ($logging) echo "\$file_recordcount: $file_recordcount\n";
 			if ($linenumbers) if ($logging) echo "Warning: using first field in table $pgtable as a line number field \n";
 			$arraytocopy = array();
+			//loop over the file records
 			for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
 				if ($recordnumber>=$skiplines) {
 					$file_fieldcount = count($file_fields[$recordnumber]);
 					if ($debugging) echo "\$recordnumber: ".($recordnumber+1)."  \$file_fieldcount: $file_fieldcount\n";
-					if ($fieldcount && ($file_fieldcount<>$fieldcount)) {
-						if ($logging) echo "Warning: record ".($recordnumber+1)." in file $file_name has $file_fieldcount fields, expected $fieldcount \n";
-					}
-					if ($file_fieldcount>$pgtable_fieldcount) {
-						if ($logging) echo "Warning: record ".($recordnumber+1)." in file $file_name has $file_fieldcount fields, pg table $pgtable only has $pgtable_fieldcount \n";
-					} 
 					/*
-					 * create the tab delimited string to use for the "row"
+					 * if $fieldcount >=0 then copy the record fields to database table fields, 1 to 1
+					 * but if $fieldcount <0 then it means to create relational records in the target table for every field. like: row#, column#, value
 					 */
-					$row = "";
-					$fieldcounttocopy = $pgtable_fieldcount;
-					$fieldcountcopied = 0;
-					/*
-					 * use the first field in the output table for file line numbers
-					 */
-					if ($linenumbers) {
-						$row .= $recordnumber+1;
-						$fieldcounttocopy = $pgtable_fieldcount-1;
-						$fieldcountcopied=1;
-					}
-					/*
-					 * now fill out the tab delimited string to paste in each row
-					 */
-					for ($fieldnumber=0;$fieldnumber<$fieldcounttocopy;$fieldnumber++) {
-						if ($fieldcountcopied) $row .= "\t";
-						if ($fieldnumber<$file_fieldcount) {
-							$row .= $file_fields[$recordnumber][$fieldnumber];
-						} else {
-							$row .= "\\NULL";
+					if ($fieldcount>=0) {
+						if ($fieldcount && ($file_fieldcount<>$fieldcount)) {
+							if ($logging) echo "Warning: record ".($recordnumber+1)." in file $file_name has $file_fieldcount fields, expected $fieldcount \n";
 						}
-						$fieldcountcopied++;
+						if ($file_fieldcount>$pgtable_fieldcount) {
+							if ($logging) echo "Warning: record ".($recordnumber+1)." in file $file_name has $file_fieldcount fields, pg table $pgtable only has $pgtable_fieldcount \n";
+						} 
+						/*
+						 * create the tab delimited string to use for the "row"
+						 */
+						$row = "";
+						$fieldcounttocopy = $pgtable_fieldcount;
+						$fieldcountcopied = 0;
+						/*
+						 * use the first field in the output table for file line numbers
+						 */
+						if ($linenumbers) {
+							$row .= $recordnumber+1;
+							$fieldcounttocopy = $pgtable_fieldcount-1;
+							$fieldcountcopied=1;
+						}
+						/*
+						 * now fill out the tab delimited string to paste in each row
+						 */
+						for ($fieldnumber=0;$fieldnumber<$fieldcounttocopy;$fieldnumber++) {
+							if ($fieldcountcopied) $row .= "\t";
+							if ($fieldnumber<$file_fieldcount) {
+								$row .= $file_fields[$recordnumber][$fieldnumber];
+							} else {
+								$row .= "\\NULL";
+							}
+							$fieldcountcopied++;
+						}
+						$row .= "\n";
+						$arraytocopy[] = $row;
+					} else {
+						// convert the field count to a positive number, but for now don't worry about what it is, create a record for every field found
+						$originalfieldcount = $fieldcount;
+						$fieldcount = -$fieldcount;
+						/*
+						 * make sure the target table is the right size, should be three fields
+						 */
+						if ($pgtable_fieldcount<>3) {
+							if ($logging) echo "Error, relational table must have three fields.  The pg table $pgtable has $pgtable_fieldcount \n";
+							return false;
+						} 
+						/*
+						 * create the tab delimited string to use for the "row"
+						 */
+						$fieldcounttocopy = $file_fieldcount;
+						$fieldcountcopied = 0;
+						/*
+						 * loop over all the fields, creating a record out of each
+						 */
+						for ($fieldnumber=0;$fieldnumber<$fieldcounttocopy;$fieldnumber++) {
+							/*
+							 * now fill out the tab delimited string to paste in each row
+							 */
+							$zero_base=false;
+							if ($zero_base) {
+								$r=($recordnumber-$skiplines);
+								$c=$fieldnumber;
+							} else {
+								$r=($recordnumber-$skiplines)+1;
+								$c=$fieldnumber+1;
+							}
+							$val=$file_fields[$recordnumber][$fieldnumber];
+							$arraytocopy[] = "$r\t$c\t$val\n";
+							$fieldcountcopied++;
+						}
 					}
-					$row .= "\n";
-					$arraytocopy[] = $row;
 				} else {
 					if ($logging) print "Warning: skipping line ".($recordnumber+1)." of file $file_name \n";
 				}
@@ -422,4 +475,29 @@ function csv2array($file_records,$options=array()) {
 			if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
 			return false;
 	}
+}
+function fixedwidth2array($file_records,$fixed_width,$options=array()) {
+	if (!$fixed_width) {
+		return false;
+	}
+	if (array_key_exists(LOGGING,$options)) {
+		$logging = $options[LOGGING];
+	} else {
+		$logging = false;
+	}
+	if (array_key_exists(DEBUGGING,$options)) {
+		$debugging = $options[DEBUGGING];
+	} else {
+		$debugging = false;
+	}
+	$recordArray = array();
+	foreach ($file_records as $file_record) {
+		$fieldArray = array();
+		$recordLength = strlen($file_record);
+		for ($i = 0; $i < $recordLength; $i=$i+$fixed_width) {
+			$fieldArray[] = substr($file_record,$i,$fixed_width);
+		}
+		$recordArray[] = $fieldArray;
+	}
+	return $recordArray;
 }
