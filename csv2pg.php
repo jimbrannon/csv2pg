@@ -94,6 +94,7 @@ function csv2pg($options=array()) {
 				break;
 			case "fixed_".substr($delimiter_arg,6): // emulate fixed_*
 				$fixed_width=intval(substr($delimiter_arg,6));
+				if ($logging) echo "switched to fixed width fields of size: $fixed_width \n";
 				break;
 			case "comma":
 			default:
@@ -102,6 +103,8 @@ function csv2pg($options=array()) {
 		}
 		$options[DELIMITER] = $delimiter;
 	}
+	if ($logging) echo "fixed_width : $fixed_width \n";
+	if ($logging) echo "delimiter final: $delimiter \n";
 	if ($debugging) echo "delimiter final: $delimiter \n";
 	/*
 	 * get the method arg
