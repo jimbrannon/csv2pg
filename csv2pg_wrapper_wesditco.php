@@ -41,10 +41,10 @@ $options[LOGGING]=true;
 $options[SKIPLINES]=0;
 $options[FIELDCOUNT]=3;
 $options[LINENUMBERS]=false;
-$options[PGUSER]="postgres";
-$options[PGPASSWORD]="Br@nD3v_psql";
-$options[PGTABLE]="emptytable10";
-$options[PGDB]="wrong";
+$options[PGUSER]="";
+$options[PGPASSWORD]="";
+$options[PGTABLE]="";
+$options[PGDB]="";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 

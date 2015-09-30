@@ -41,10 +41,10 @@ $options[LOGGING]=true;
 $options[SKIPLINES]=0;
 $options[FIELDCOUNT]=3; // a field count of <0 means convert it into a relational table with the fields row#, column#, value
 $options[LINENUMBERS]=false;
-$options[PGUSER]="drupal";
-$options[PGPASSWORD]="drupal_psql";
-$options[PGTABLE]="empty_dummy";
-$options[PGDB]="drupal_fetchit7_testing";
+$options[PGUSER]="";
+$options[PGPASSWORD]="";
+$options[PGTABLE]="";
+$options[PGDB]="";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
