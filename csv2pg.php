@@ -391,6 +391,7 @@ function csv2pg($options=array()) {
 						/*
 						 * make sure the target table is the right size, should be three fields
 						 */
+						if ($logging) print "Warning: field count is <0 ($fieldcount), therefore saving each field to a relational record in table $pgtable \n";
 						if ($pgtable_fieldcount<>3) {
 							if ($logging) echo "Error, relational table must have three fields.  The pg table $pgtable has $pgtable_fieldcount \n";
 							return false;
@@ -416,10 +417,6 @@ function csv2pg($options=array()) {
 								$c=$fieldnumber+1;
 							}
 							$val=$file_fields[$recordnumber][$fieldnumber];
-							if ($logging) echo "r $r \n";
-							if ($logging) echo "c $c \n";
-							if ($logging) echo "val $val \n";
-							if ($logging) echo "$r\t$c\t$val\n";
 							$row="";
 							$row .= $r;
 							$row .= "\t";
@@ -435,7 +432,6 @@ function csv2pg($options=array()) {
 					if ($logging) print "Warning: skipping line ".($recordnumber+1)." of file $file_name \n";
 				}
 			}
-			if ($logging) print_r($arraytocopy);
 			return pg_copy_from($pgconnection,$pgtable,$arraytocopy,"\t","\\NULL");
 		} else {
 			if ($logging) echo "Error: csv2pg: could not convert file record array into file field arrays\n";
