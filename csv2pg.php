@@ -387,9 +387,6 @@ function csv2pg($options=array()) {
 						$row .= "\n";
 						$arraytocopy[] = $row;
 					} else {
-						// convert the field count to a positive number, but for now don't worry about what it is, create a record for every field found
-						$originalfieldcount = $fieldcount;
-						$fieldcount = -$fieldcount;
 						/*
 						 * make sure the target table is the right size, should be three fields
 						 */
