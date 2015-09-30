@@ -473,11 +473,32 @@ function csv2array($file_records,$options=array()) {
 	// there are better more rigorous methods out there, but this was a quick and inexpensive project...
 	//   put the better ones here when the need arises
 	switch($method) {
+		// this allows multiple adjacent delimiters to be treated as one
+		//   mainly used for spaces, but tried to generalize it to other delimiters just in case
+		case 2: 
+			$csvArray = array();
+			foreach ($file_records as $file_record) {
+				switch ($delimiter) {
+					case " ":
+						$csvArray[] = preg_split ("/\s+/",$file_record);
+						break;
+					case "\t":
+						$csvArray[] = preg_split ("/\t+/",$file_record);
+						break;
+					default:
+						// not sure this always works for all characters chosen as delimiters
+						// may need more specfic cases added above
+						$csvArray[] = preg_split ("/".$delimiter."+/",$file_record);
+				}
+			}
+			return $csvArray;
+			break;
 		case 1:
 			$csvArray = array();
 			foreach ($file_records as $file_record)
 				$csvArray[] = str_getcsv($file_record,$delimiter,$enclosure,$escape);
 			return $csvArray;
+			break;
 		case 0:
 		default:
 			if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
@@ -485,10 +506,16 @@ function csv2array($file_records,$options=array()) {
 	}
 }
 function fixedwidth2array($file_records,$fixed_width_array,$options=array()) {
+	//check that we have at least one
+	$fieldwidthcount = count($fixed_width_array);
+	if (!$fieldwidthcount) {
+		return false;
+	}
 	$fixed_width = $fixed_width_array[0];
 	if (!$fixed_width) {
 		return false;
 	}
+	// we have at least one field wdith, continue...
 	if (array_key_exists(LOGGING,$options)) {
 		$logging = $options[LOGGING];
 	} else {
@@ -500,7 +527,6 @@ function fixedwidth2array($file_records,$fixed_width_array,$options=array()) {
 		$debugging = false;
 	}
 	$recordArray = array();
-	$fieldwidthcount = count($fixed_width_array);
 	foreach ($file_records as $file_record) {
 		$fieldArray = array();
 		$recordLength = strlen($file_record);
