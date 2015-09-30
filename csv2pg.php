@@ -312,10 +312,10 @@ function csv2pg($options=array()) {
 		 */
 		if($fixed_width){
 			// read the records with fixed width fields of size $fixed_width
-			$file_fields = fixedwidth2array($file_records,$fixed_width,$options)
+			$file_fields = fixedwidth2array($file_records,$fixed_width,$options);
 		} else {
 			//else assume it is a delimited record
-			$file_fields = csv2array($file_records,$options)
+			$file_fields = csv2array($file_records,$options);
 		}
 		if ($file_fields) {
 			if ($debugging) print_r($file_fields);
