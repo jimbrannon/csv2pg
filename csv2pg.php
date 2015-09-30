@@ -340,6 +340,7 @@ function csv2pg($options=array()) {
 			$file_recordcount = count($file_records);
 			if ($logging) echo "\$pgtable_fieldcount: $pgtable_fieldcount\n";
 			if ($logging) echo "\$fieldcount (expected): $fieldcount\n";
+			if ($fieldcount<0) if ($logging) print "Warning: field count is <0 ($fieldcount), therefore saving each field to a relational record in table $pgtable \n";
 			if ($logging) echo "\$file_recordcount: $file_recordcount\n";
 			if ($linenumbers) if ($logging) echo "Warning: using first field in table $pgtable as a line number field \n";
 			$arraytocopy = array();
@@ -391,7 +392,6 @@ function csv2pg($options=array()) {
 						/*
 						 * make sure the target table is the right size, should be three fields
 						 */
-						if ($logging) print "Warning: field count is <0 ($fieldcount), therefore saving each field to a relational record in table $pgtable \n";
 						if ($pgtable_fieldcount<>3) {
 							if ($logging) echo "Error, relational table must have three fields.  The pg table $pgtable has $pgtable_fieldcount \n";
 							return false;
