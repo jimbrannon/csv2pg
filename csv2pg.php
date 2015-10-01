@@ -698,7 +698,13 @@ function mfwf2array($file_records,$modflowwellfile,$options=array()) {
 				for($i=0;$i<count($record_field_array);$i++) {
 					$temp_field_array[$i+1] = $record_field_array[$i];
 				}
-				$mfwfArray[]=$temp_field_array;
+				if($modflowwellfile>0) {
+					if($modflowwellfile==$nyear) {
+						$mfwfArray[]=$temp_field_array;
+					}
+				} else {
+					$mfwfArray[]=$temp_field_array;
+				}
 			}
 		}
 		$file_record_counter++;
