@@ -340,6 +340,7 @@ function csv2pg($options=array()) {
 				$file_fields = csv2array($file_records,$options);
 			}
 		}
+		
 		if ($file_fields) {
 			if ($debugging) print_r($file_fields);
 			/*
@@ -360,14 +361,18 @@ function csv2pg($options=array()) {
 			$results = pg_query($pgconnection, "SELECT * FROM $pgtable LIMIT 1");
 			$pgtable_fieldcount = pg_num_fields($results);
 			$file_recordcount = count($file_records);
+			$parsed_recordcount = count($file_fields);
 			if ($logging) echo "\$pgtable_fieldcount: $pgtable_fieldcount\n";
 			if ($logging) echo "\$fieldcount (expected): $fieldcount\n";
 			if ($fieldcount<0) if ($logging) print "Warning: field count is <0 ($fieldcount), therefore saving each field to a relational record in table $pgtable \n";
 			if ($logging) echo "\$file_recordcount: $file_recordcount\n";
+			if ($logging) echo "\$parsed_recordcount: $parsed_recordcount\n";
 			if ($linenumbers) if ($logging) echo "Warning: using first field in table $pgtable as a line number field \n";
 			$arraytocopy = array();
 			//loop over the file records
-			for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
+			//for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
+			//loop over the parsed file records
+			for($recordnumber=0;$recordnumber<$parsed_recordcount;$recordnumber++) {
 				if ($recordnumber>=$skiplines) {
 					$file_fieldcount = count($file_fields[$recordnumber]);
 					if ($debugging) echo "\$recordnumber: ".($recordnumber+1)."  \$file_fieldcount: $file_fieldcount\n";
@@ -639,7 +644,7 @@ function mfwf2array($file_records,$modflowwellfile,$options=array()) {
 		if($file_record_counter) {
 			if($file_record_counter == $next_timestep_record) {
 				//determine the next time step record
-				$timesteprecordcount = $record_field_array[0];
+				$timesteprecordcount = intval($record_field_array[0]);
 				$next_timestep_record += $timesteprecordcount + 1;
 				//now figure out the current time step index in case there are data records to read
 				$timestepstring = $record_field_array[1];
