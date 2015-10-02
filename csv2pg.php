@@ -360,6 +360,10 @@ function csv2pg($options=array()) {
 			}
 			$results = pg_query($pgconnection, "SELECT * FROM $pgtable LIMIT 1");
 			$pgtable_fieldcount = pg_num_fields($results);
+			if(!$pgtable_fieldcount) {
+				if ($logging) echo "Error: could not get target table $pgtable field count \n";
+				return false;
+			}
 			$file_recordcount = count($file_records);
 			$parsed_recordcount = count($file_fields);
 			if ($logging) echo "\$pgtable_fieldcount: $pgtable_fieldcount\n";
