@@ -84,6 +84,7 @@ function csv2pg($options=array()) {
 	$delimiter_arg = getargs ("delimiter",$delimiter);
 	if ($debugging) echo "delimiter_arg: $delimiter_arg \n";
 	$fixed_width=0;
+	$fixed_width_array=array();
 	if (strlen(trim($delimiter_arg))) {
 		switch($delimiter_arg) {
 			case "tab":
@@ -93,7 +94,8 @@ function csv2pg($options=array()) {
 				$delimiter = " ";
 				break;
 			case "fixed_".substr($delimiter_arg,6): // emulate fixed_*
-				$fixed_width=intval(substr($delimiter_arg,6));
+				$fixed_width_array=explode("_",substr($delimiter_arg,6));
+				$fixed_width=intval($fixed_width_array[0]);
 				if ($logging) echo "switched to fixed width fields of size: $fixed_width \n";
 				break;
 			case "comma":
@@ -171,6 +173,22 @@ function csv2pg($options=array()) {
 		$options[LINENUMBERS] = $linenumbers;
 	}
 	if ($debugging) echo "linenumbers final: $linenumbers \n";
+	/*
+	 * get the modflow well file arg - 0 is false, xx > is true, read the data for year xx from the file, <0 is true, read the WHOLE file 
+	 */
+	if (array_key_exists(MODFLOWWELLFILE,$options)) {
+		$modflowwellfile = $options[MODFLOWWELLFILE];
+	} else {
+		$modflowwellfile = 0;
+	}
+	if ($debugging) echo "modflowwellfile default: $modflowwellfile \n";
+	$modflowwellfile_arg = getargs ("modflowwellfile",$modflowwellfile);
+	if ($debugging) echo "modflowwellfile_arg: $modflowwellfile_arg \n";
+	if (strlen(trim($modflowwellfile_arg))) {
+		$modflowwellfile = intval($modflowwellfile_arg);
+		$options[MODFLOWWELLFILE] = $modflowwellfile;
+	}
+	if ($debugging) echo "modflowwellfile final: $modflowwellfile \n";
 	/*
 	 * get the pguser arg
 	 */
@@ -313,11 +331,16 @@ function csv2pg($options=array()) {
 		 */
 		if($fixed_width){
 			// read the records with fixed width fields of size $fixed_width
-			$file_fields = fixedwidth2array($file_records,$fixed_width,$options);
+			$file_fields = fixedwidth2array($file_records,$fixed_width_array,$options);
 		} else {
 			//else assume it is a delimited record
-			$file_fields = csv2array($file_records,$options);
+			if($modflowwellfile) { //hopefully the user set things up for the right file format - such as free format and space delimited which is my case!
+				$file_fields = mfwf2array($file_records,$modflowwellfile,$options);
+			} else {
+				$file_fields = csv2array($file_records,$options);
+			}
 		}
+		
 		if ($file_fields) {
 			if ($debugging) print_r($file_fields);
 			/*
@@ -337,15 +360,23 @@ function csv2pg($options=array()) {
 			}
 			$results = pg_query($pgconnection, "SELECT * FROM $pgtable LIMIT 1");
 			$pgtable_fieldcount = pg_num_fields($results);
+			if(!$pgtable_fieldcount) {
+				if ($logging) echo "Error: could not get target table $pgtable field count \n";
+				return false;
+			}
 			$file_recordcount = count($file_records);
+			$parsed_recordcount = count($file_fields);
 			if ($logging) echo "\$pgtable_fieldcount: $pgtable_fieldcount\n";
 			if ($logging) echo "\$fieldcount (expected): $fieldcount\n";
 			if ($fieldcount<0) if ($logging) print "Warning: field count is <0 ($fieldcount), therefore saving each field to a relational record in table $pgtable \n";
 			if ($logging) echo "\$file_recordcount: $file_recordcount\n";
+			if ($logging) echo "\$parsed_recordcount: $parsed_recordcount\n";
 			if ($linenumbers) if ($logging) echo "Warning: using first field in table $pgtable as a line number field \n";
 			$arraytocopy = array();
 			//loop over the file records
-			for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
+			//for($recordnumber=0;$recordnumber<$file_recordcount;$recordnumber++) {
+			//loop over the parsed file records
+			for($recordnumber=0;$recordnumber<$parsed_recordcount;$recordnumber++) {
 				if ($recordnumber>=$skiplines) {
 					$file_fieldcount = count($file_fields[$recordnumber]);
 					if ($debugging) echo "\$recordnumber: ".($recordnumber+1)."  \$file_fieldcount: $file_fieldcount\n";
@@ -471,21 +502,49 @@ function csv2array($file_records,$options=array()) {
 	// there are better more rigorous methods out there, but this was a quick and inexpensive project...
 	//   put the better ones here when the need arises
 	switch($method) {
+		// this allows multiple adjacent delimiters to be treated as one
+		//   mainly used for spaces, but tried to generalize it to other delimiters just in case
+		case 2: 
+			$csvArray = array();
+			foreach ($file_records as $file_record) {
+				switch ($delimiter) {
+					case " ":
+						$csvArray[] = preg_split ("/\s+/",$file_record);
+						break;
+					case "\t":
+						$csvArray[] = preg_split ("/\t+/",$file_record);
+						break;
+					default:
+						// not sure this always works for all characters chosen as delimiters
+						// may need more specfic cases added above
+						$csvArray[] = preg_split ("/".$delimiter."+/",$file_record);
+				}
+			}
+			return $csvArray;
+			break;
 		case 1:
 			$csvArray = array();
 			foreach ($file_records as $file_record)
 				$csvArray[] = str_getcsv($file_record,$delimiter,$enclosure,$escape);
 			return $csvArray;
+			break;
 		case 0:
 		default:
 			if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
 			return false;
 	}
 }
-function fixedwidth2array($file_records,$fixed_width,$options=array()) {
+function fixedwidth2array($file_records,$fixed_width_array,$options=array()) {
+	//check that we have at least one
+	$fieldwidthcount = count($fixed_width_array);
+	if (!$fieldwidthcount) {
+		return false;
+	}
+	$fixed_width = $fixed_width_array[0];
 	if (!$fixed_width) {
 		return false;
 	}
+	// we have at least one field wdith, continue...
 	if (array_key_exists(LOGGING,$options)) {
 		$logging = $options[LOGGING];
 	} else {
@@ -500,10 +559,159 @@ function fixedwidth2array($file_records,$fixed_width,$options=array()) {
 	foreach ($file_records as $file_record) {
 		$fieldArray = array();
 		$recordLength = strlen($file_record);
-		for ($i = 0; $i < $recordLength; $i=$i+$fixed_width) {
-			$fieldArray[] = substr($file_record,$i,$fixed_width);
+		$currentpointer = 0;
+		$currentwidth = 0;
+		$fieldcounter = 0;
+		while ($currentpointer < $recordLength) {
+			// reset field width if necessary
+			if ($fieldcounter < $fieldwidthcount) {
+				$currentwidth = $fixed_width_array[$fieldcounter];
+			}
+			//get the field
+			$fieldArray[] = substr($file_record,$currentpointer,$currentwidth);
+			//set up for the next field
+			$currentpointer += $currentwidth;
+			$fieldcounter++;
 		}
 		$recordArray[] = $fieldArray;
 	}
 	return $recordArray;
+}
+function mfwf2array($file_records,$modflowwellfile,$options=array()) {
+	if (array_key_exists(LOGGING,$options)) {
+		$logging = $options[LOGGING];
+	} else {
+		$logging = false;
+	}
+	if (array_key_exists(DEBUGGING,$options)) {
+		$debugging = $options[DEBUGGING];
+	} else {
+		$debugging = false;
+	}
+	if (array_key_exists(DELIMITER,$options)) {
+		$delimiter = $options[DELIMITER];
+	} else {
+		$delimiter = ",";
+	}
+	$enclosure='"';
+	$escape='\\';
+	if (array_key_exists(METHOD,$options)) {
+		$method = $options[METHOD];
+	} else {
+		if ($logging) echo "Error: csv2array: missing file processing method\n";
+		if ($debugging) print_r($options);
+		return false;
+	}
+	$mfwfArray = array();
+	$file_record_counter = 0;
+	$next_timestep_record = 1;
+	$current_timestep = 0;
+	foreach ($file_records as $file_record) {
+		/*
+		 * for modflow well files, have to do some processing of some records, before reading the others
+		 * in the case I am handling,
+		 *    read but ignore record 1
+		 *    read a time step record and get the timestep info and number of following records
+		 *    if it is a desired year, read the records, adding the time step info as an extra field at the start
+		 *    assumes month index starting in jan 1900 is the time step counter
+		 */
+		// first parse the record 
+		$record_field_array=array();
+		// there are better more rigorous methods out there, but this was a quick and inexpensive project...
+		//   put the better ones here when the need arises
+		switch($method) {
+			// this allows multiple adjacent delimiters to be treated as one
+			//   mainly used for spaces, but tried to generalize it to other delimiters just in case
+			case 2:
+				switch ($delimiter) {
+					case " ":
+						$record_field_array = preg_split ("/\s+/",$file_record);
+						break;
+					case "\t":
+						$record_field_array = preg_split ("/\t+/",$file_record);
+						break;
+					default:
+						// not sure this always works for all characters chosen as delimiters
+						// may need more specfic cases added above
+						$record_field_array = preg_split ("/".$delimiter."+/",$file_record);
+				}
+				break;
+			case 1:
+				$record_field_array = str_getcsv($file_record,$delimiter,$enclosure,$escape);
+				break;
+			case 0:
+			default:
+				if ($logging)echo "Error: csv2array: invalid file processing method specified: ".$method."\n";
+				return false;
+		}
+		// make sure we have skipped the first record
+		if($file_record_counter) {
+			if($file_record_counter == $next_timestep_record) {
+				//determine the next time step record
+				$timesteprecordcount = intval($record_field_array[0]);
+				$next_timestep_record += $timesteprecordcount + 1;
+				//now figure out the current time step index in case there are data records to read
+				$timestepstring = $record_field_array[1];
+				$nyear = intval(substr($timestepstring,4,4));
+				$monthstr = substr($timestepstring,0,3);
+				switch (strtolower(trim($monthstr))) {
+					case "jan":
+						$nmonth = 1;
+						break;
+					case "feb":
+						$nmonth = 2;
+						break;
+					case "mar":
+						$nmonth = 3;
+						break;
+					case "apr":
+						$nmonth = 4;
+						break;
+					case "may":
+						$nmonth = 5;
+						break;
+					case "jun":
+						$nmonth = 6;
+						break;
+					case "jul":
+						$nmonth = 7;
+						break;
+					case "aug":
+						$nmonth = 8;
+						break;
+					case "sep":
+						$nmonth = 9;
+						break;
+					case "oct":
+						$nmonth = 10;
+						break;
+					case "nov":
+						$nmonth = 11;
+						break;
+					case "dec":
+						$nmonth = 12;
+						break;
+					default:
+						$nmonth = 1;
+				}
+				$current_timestep = ($nyear-1900)*12 + $nmonth;
+			} else {
+				//it is a data record, read it and save the data
+				$temp_field_array = array();
+				$temp_field_array[0] = $current_timestep;
+				for($i=0;$i<count($record_field_array);$i++) {
+					$temp_field_array[$i+1] = $record_field_array[$i];
+				}
+				if($modflowwellfile>0) {
+					if($modflowwellfile==$nyear) {
+						$mfwfArray[]=$temp_field_array;
+					}
+				} else {
+					$mfwfArray[]=$temp_field_array;
+				}
+			}
+		}
+		$file_record_counter++;
+	}
+	return $mfwfArray;
 }
