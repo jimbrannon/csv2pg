@@ -19,6 +19,7 @@ define("LOGGING","logging");
 define("SKIPLINES","skiplines");
 define("FIELDCOUNT","fieldcount");
 define("LINENUMBERS","linenumbers");
+define("MODFLOWWELLFILE","modflowwellfile");
 define("PGUSER","pguser");
 define("PGPASSWORD","pgpassword");
 define("PGTABLE","pgtable");
@@ -34,17 +35,18 @@ define("PGPORT","pgport");
  * the difference is they all get stuffed into an options array, makes for much cleaner code
  */
 $options[FILENAME]="dirty_data_1.txt";
-$options[DELIMITER]=","; //typical: comma ",";  tab "\t"; space " "
+$options[DELIMITER]=","; //typical: comma ",";  tab "\t"; space " ", "fixedwidth_x" means read it as fixed width fields of size x
 $options[METHOD]=1;
 $options[DEBUGGING]=false;
 $options[LOGGING]=true;
 $options[SKIPLINES]=0;
-$options[FIELDCOUNT]=3;
+$options[FIELDCOUNT]=3; // a field count of <0 means convert it into a relational table with the fields row#, column#, value
 $options[LINENUMBERS]=false;
-$options[PGUSER]="drupal";
-$options[PGPASSWORD]="drupal_psql";
-$options[PGTABLE]="empty_dummy";
-$options[PGDB]="drupal_fetchit7_testing";
+$options[MODFLOWWELLFILE]=0;
+$options[PGUSER]="";
+$options[PGPASSWORD]="";
+$options[PGTABLE]="";
+$options[PGDB]="";
 $options[PGHOST]="localhost";
 $options[PGPORT]=5432;
 
