@@ -19,6 +19,7 @@ define("LOGGING","logging");
 define("SKIPLINES","skiplines");
 define("FIELDCOUNT","fieldcount");
 define("LINENUMBERS","linenumbers");
+define("MODFLOWWELLFILE","modflowwellfile");
 define("PGUSER","pguser");
 define("PGPASSWORD","pgpassword");
 define("PGTABLE","pgtable");
@@ -41,6 +42,7 @@ $options[LOGGING]=true;
 $options[SKIPLINES]=0;
 $options[FIELDCOUNT]=3; // a field count of <0 means convert it into a relational table with the fields row#, column#, value
 $options[LINENUMBERS]=false;
+$options[MODFLOWWELLFILE]=0;
 $options[PGUSER]="";
 $options[PGPASSWORD]="";
 $options[PGTABLE]="";
