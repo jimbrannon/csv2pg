@@ -174,6 +174,22 @@ function csv2pg($options=array()) {
 	}
 	if ($debugging) echo "linenumbers final: $linenumbers \n";
 	/*
+	 * get the delete records arg
+	 */
+	if (array_key_exists(DELETERECORDS,$options)) {
+		$deleterecords = $options[DELETERECORDS];
+	} else {
+		$deleterecords = false;
+	}
+	if ($debugging) echo "deleterecords default: $deleterecords \n";
+	$deleterecords_arg = getargs ("deleterecords",$deleterecords);
+	if ($debugging) echo "deleterecords_arg: $deleterecords_arg \n";
+	if (strlen(trim($deleterecords_arg))) {
+		$deleterecords = strtobool($deleterecords_arg);
+		$options[DELETERECORDS] = $deleterecords;
+	}
+	if ($debugging) echo "deleterecords final: $deleterecords \n";
+	/*
 	 * get the modflow well file arg - 0 is false, xx > is true, read the data for year xx from the file, <0 is true, read the WHOLE file 
 	 */
 	if (array_key_exists(MODFLOWWELLFILE,$options)) {
@@ -462,6 +478,10 @@ function csv2pg($options=array()) {
 				} else {
 					if ($logging) print "Warning: skipping line ".($recordnumber+1)." of file $file_name \n";
 				}
+			}
+			if ($deleterecords) {
+				if ($logging) echo "Alert: csv2pg: deleting existing records from $pgtable.\n";
+				$results = pg_query($pgconnection, "DELETE FROM $pgtable");
 			}
 			return pg_copy_from($pgconnection,$pgtable,$arraytocopy,"\t","\\NULL");
 		} else {
